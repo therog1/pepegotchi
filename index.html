@@ -6,66 +6,182 @@
 <title>Pepegotchi</title>
 <style>
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #142016; color: #172016; font-family: ui-monospace, Menlo, Consolas, monospace; }
-  .shell { width: min(94vw, 390px); background: #d7d2c8; border-radius: 42px 42px 64px 64px; padding: 16px; box-shadow: inset 0 0 0 3px #1b1b1b; }
+  .shell { width: min(94vw, 400px); background: #d7d2c8; border-radius: 42px 42px 64px 64px; padding: 16px; box-shadow: inset 0 0 0 3px #1b1b1b; }
   .brand { text-align: center; font-weight: 800; letter-spacing: 2px; font-size: 13px; }
-  .screen { background: #9ad07a; border: 6px solid #2c2c2c; border-radius: 16px; padding: 8px; margin-top: 8px; }
-  .screen.asleep { background: #1c2430; } .screen.dead { background: #2c3338; }
-  svg { width: 100%; height: 250px; display: block; }
-  .meter { font-size: 13px; margin-top: 6px; } .call { font-size: 12px; min-height: 16px; }
+  .screen { border: 6px solid #2c2c2c; border-radius: 16px; padding: 6px; margin-top: 8px; background: #87d37c; }
+  svg { width: 100%; height: 320px; display: block; }
   .btns, .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   button { border: 2px solid #1b1b1b; background: #f4f1ea; border-radius: 999px; padding: 7px 9px; font: inherit; font-size: 12px; }
   button.on { background: #1b3a1a; color: #f4ffe8; }
-  h2 { font-size: 11px; margin: 10px 0 0; } .log { font-size: 12px; min-height: 32px; margin-top: 6px; }
-</style></head><body>
-<div class="shell"><div class="brand">PEPEGOTCHI</div><div class="screen" id="screen"></div>
-<div class="meter" id="meter"></div><div class="call" id="call"></div>
-<div class="btns">
-<button data-act="meal">Meal</button><button data-act="snack">Snack</button><button data-act="play">Play</button>
-<button data-act="flush">Flush</button><button data-act="med">Medicine</button><button data-act="lights">Lights</button>
-<button data-act="scold">Scold</button><button data-act="reset">Reset</button></div>
-<h2>Hat</h2><div class="row" id="hat"><button data-hat="0">none</button><button data-hat="1">beanie</button><button data-hat="2">cap</button><button data-hat="3">party</button></div>
-<h2>Clothes</h2><div class="row" id="clothes"><button data-clothes="0">none</button><button data-clothes="1">tee</button><button data-clothes="2">hoodie</button><button data-clothes="3">sailor</button></div>
-<h2>Earring</h2><div class="row" id="ear"><button data-ear="0">none</button><button data-ear="1">stud</button><button data-ear="2">hoop</button></div>
-<div class="log" id="log">Four hearts. A call unanswered for 15 game minutes is a care mistake.</div></div>
+  h2 { font-size: 11px; margin: 10px 0 0; }
+  .log { font-size: 12px; min-height: 34px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="brand">PEPEGOTCHI</div>
+  <div class="screen" id="screen"></div>
+  <div class="btns">
+    <button data-act="meal">Meal</button>
+    <button data-act="snack">Snack</button>
+    <button data-act="play">Play</button>
+    <button data-act="flush">Flush</button>
+    <button data-act="med">Medicine</button>
+    <button data-act="lights">Lights</button>
+    <button data-act="scold">Scold</button>
+    <button data-act="sitter">Sitter</button>
+    <button data-act="reset">Reset</button>
+  </div>
+  <h2>Hat, minted face stays</h2>
+  <div class="row" id="hat">
+    <button data-hat="0">none</button><button data-hat="1">beanie</button>
+    <button data-hat="2">cap</button><button data-hat="3">party</button>
+  </div>
+  <div class="row" id="clothes">
+    <button data-clothes="0">none</button><button data-clothes="1">tee</button>
+    <button data-clothes="2">hoodie</button><button data-clothes="3">sailor</button>
+  </div>
+  <div class="row" id="ear">
+    <button data-ear="0">none</button><button data-ear="1">stud</button><button data-ear="2">hoop</button>
+  </div>
+  <div class="log" id="log">Hearts and days are in the picture. Sitter pauses a workday.</div>
+</div>
 <script>
-const hats=["none","beanie","cap","party"], clothes=["none","tee","hoodie","sailor"], ears=["none","stud","hoop"];
-let pet=fresh();
-function fresh(){return {hunger:4,happy:4,discipline:1,weight:20,poop:0,sick:false,mistakes:0,discMistakes:0,ageMin:0,clock:10*60,asleep:false,lightsOff:false,calling:false,callLeft:0,callReason:"",hat:0,clothes:0,ear:0,dead:false,log:"Hatched. Meal fills hunger. Snack or play fills happy."}}
-function hearts(n){return "\u2665".repeat(n)+"\u2661".repeat(4-n)}
-function hhmm(){const h=Math.floor(pet.clock/60)%24,m=pet.clock%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")}
-function stage(){if(pet.ageMin<60)return "baby"; if(pet.ageMin<60+48*60)return "child"; if(pet.ageMin<60+48*60+72*60)return "teen"; return "adult"}
-function act(name){
- if(pet.dead){pet.log="Dead. Reset.";return}
- if(name==="meal"){if(pet.asleep)return pet.log="Asleep."; if(pet.hunger>=4)return pet.log="Full. It refuses."; pet.hunger++; pet.weight++; pet.log="Meal. Hunger +1 heart."; clearCall("hunger")}
- else if(name==="snack"){if(pet.asleep)return pet.log="Asleep."; if(pet.happy>=4)return pet.log="Already happy. Snack refused."; pet.happy++; pet.weight+=2; pet.log="Snack. Happy +1, weight +2."; clearCall("happy")}
- else if(name==="play"){if(pet.asleep)return pet.log="Asleep."; if(pet.happy>=4)return pet.log="Does not want to play."; pet.happy++; pet.log="Game won. Happy +1."; clearCall("happy")}
- else if(name==="flush"){if(!pet.poop)return pet.log="No poop."; pet.poop=0; pet.happy=Math.min(4,pet.happy+1); pet.log="Flushed. Happy +1."; clearCall("poop")}
- else if(name==="med"){if(!pet.sick){pet.discMistakes++; return pet.log="Not sick. Discipline mistake."} pet.sick=false; pet.log="Medicine. Skull gone."; clearCall("sick")}
- else if(name==="lights"){pet.lightsOff=!pet.lightsOff; pet.log=pet.lightsOff?"Lights off.":"Lights on."; if(pet.asleep&&pet.lightsOff)clearCall("sleep")}
- else if(name==="scold"){if(pet.calling&&pet.callReason==="spoil"){pet.discipline=Math.min(4,pet.discipline+1); pet.log="Good scold. Discipline +1."; clearCall("spoil")} else {pet.discMistakes++; pet.log="Scolded for no reason."}}
+const furs = ["#5fbf4a", "#7ec8e3", "#e07a5f", "#c9a227", "#b497d6"];
+const bgs = ["#87d37c", "#f2c14e", "#7eb6d9", "#e7a0bf", "#c8c2b4"];
+const eyes = ["dot", "wide", "sleepy"];
+let pet = hatch();
+function hatch() {
+  return {
+    fur: furs[Math.floor(Math.random() * furs.length)],
+    bg: bgs[Math.floor(Math.random() * bgs.length)],
+    eyes: eyes[Math.floor(Math.random() * eyes.length)],
+    hunger: 4, happy: 4, discipline: 1, weight: 20, poop: 0, sick: false,
+    mistakes: 0, discMistakes: 0, ageMin: 0, clock: 8 * 60,
+    asleep: false, lightsOff: false, sitterUntil: 0,
+    calling: false, callLeft: 0, callReason: "",
+    hat: 0, clothes: 0, ear: 0, dead: false, frozenDay: 0,
+    log: "Minted fur, eyes, and background do not change."
+  };
 }
-function clearCall(r){if(pet.callReason===r){pet.calling=false; pet.callReason=""}}
-function startCall(r){pet.calling=true; pet.callReason=r; pet.callLeft=15}
-function tick(){
- if(pet.dead)return; pet.clock=(pet.clock+1)%(24*60); pet.ageMin++;
- const h=Math.floor(pet.clock/60); pet.asleep=h>=22||h<9;
- if(pet.ageMin%180===0&&!pet.asleep&&pet.hunger>0)pet.hunger--;
- if(pet.ageMin%240===0&&!pet.asleep&&pet.happy>0)pet.happy--;
- if(pet.ageMin%200===0&&pet.poop<4)pet.poop++;
- if(pet.poop>=3)pet.sick=true;
- if(!pet.calling){ if(pet.sick)startCall("sick"); else if(pet.poop)startCall("poop"); else if(pet.asleep&&!pet.lightsOff)startCall("sleep"); else if(pet.hunger===0)startCall("hunger"); else if(pet.happy===0)startCall("happy"); else if(pet.ageMin%300===0)startCall("spoil") }
- else { pet.callLeft--; if(pet.callLeft<=0){ if(pet.callReason==="spoil")pet.discMistakes++; else pet.mistakes++; pet.log="Missed the call. Care mistakes "+pet.mistakes+"."; pet.calling=false } }
- if(pet.sick&&pet.mistakes>=6)pet.dead=true;
+function day() { return pet.dead ? pet.frozenDay : Math.floor(pet.ageMin / (24 * 60)); }
+function form() {
+  if (pet.dead) return "dead";
+  if (pet.ageMin < 30) return "egg";
+  if (pet.ageMin < 90) return "baby";
+  if (pet.ageMin < 240) return "child";
+  if (pet.mistakes <= 1 && pet.discMistakes <= 1 && pet.ageMin > 300) return "good";
+  if (pet.mistakes >= 4) return "neglected";
+  return "teen";
 }
-function hat(){ if(pet.hat===1)return '<path d="M96 112 h128 v16 H96z" fill="#355c9a" stroke="#1b3a1a"/>'; if(pet.hat===2)return '<path d="M100 108 h120 l-12 16 H112z" fill="#e23d3d" stroke="#1b3a1a"/><rect x="108" y="122" width="104" height="7" fill="#e23d3d" stroke="#1b3a1a"/>'; if(pet.hat===3)return '<path d="M150 86 l10 22 22 2 -18 14 6 22 -20 -12 -20 12 6 -22 -18 -14 22 -2z" fill="#f2c14e" stroke="#1b3a1a"/>'; return "" }
-function bodyClothes(){ if(pet.clothes===1)return '<path d="M108 186 h104 v28 H108z" fill="#f4f1ea" stroke="#1b3a1a"/>'; if(pet.clothes===2)return '<path d="M100 186 q60 28 120 0 v30 q-60 16 -120 0z" fill="#355c9a" stroke="#1b3a1a"/>'; if(pet.clothes===3)return '<path d="M112 188 h96 v22 H112z" fill="#f4f1ea" stroke="#1b3a1a"/><path d="M112 188 l48 16 48 -16" fill="none" stroke="#355c9a" stroke-width="4"/>'; return "" }
-function earring(){ if(pet.ear===1)return '<circle cx="214" cy="146" r="4" fill="#f2c14e" stroke="#1b3a1a"/>'; if(pet.ear===2)return '<ellipse cx="216" cy="152" rx="5" ry="8" fill="none" stroke="#f2c14e" stroke-width="3"/>'; return "" }
-function poop(){ let s=""; for(let i=0;i<pet.poop;i++) s+=`<circle cx="${28+i*14}" cy="210" r="6" fill="#6b4f2a" stroke="#1b3a1a"/>`; return s }
-function svg(){ const fill=pet.sick?"#7a9a45":"#5fbf4a"; const eye=pet.dead?'<path d="M118 150 l14 12 M132 150 l-14 12 M188 150 l14 12 M202 150 l-14 12" stroke="#1b3a1a" stroke-width="4"/>':pet.asleep?'<path d="M116 156 q10 7 20 0 M184 156 q10 7 20 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>':pet.happy<2?'<ellipse cx="126" cy="156" rx="8" ry="4"/><ellipse cx="194" cy="156" rx="8" ry="4"/>':'<circle cx="126" cy="154" r="8"/><circle cx="194" cy="154" r="8"/><circle cx="129" cy="151" r="2.5" fill="#fff"/><circle cx="197" cy="151" r="2.5" fill="#fff"/>'; const mouth=pet.happy<2||pet.dead?'<path d="M140 178 q20 -12 40 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>':'<path d="M140 174 q20 14 40 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>'; return `<svg viewBox="0 0 320 250">${hat()}${bodyClothes()}<ellipse cx="160" cy="176" rx="62" ry="40" fill="${fill}" stroke="#1b3a1a" stroke-width="5"/><ellipse cx="122" cy="132" rx="20" ry="24" fill="${fill}" stroke="#1b3a1a" stroke-width="5"/><ellipse cx="198" cy="132" rx="20" ry="24" fill="${fill}" stroke="#1b3a1a" stroke-width="5"/><ellipse cx="160" cy="166" rx="40" ry="26" fill="#c6ef9a"/>${eye}${mouth}${earring()}${poop()}${pet.sick?'<text x="250" y="48" font-size="22" fill="#d94f70">+</text>':""}</svg>` }
-function render(){ document.getElementById("screen").className="screen"+(pet.dead?" dead":pet.asleep?" asleep":""); document.getElementById("screen").innerHTML=svg(); document.getElementById("meter").textContent=hhmm()+"  "+stage()+"  hunger "+hearts(pet.hunger)+"  happy "+hearts(pet.happy); document.getElementById("call").textContent=pet.calling?("CALL "+pet.callReason+" \u00b7 "+pet.callLeft+" min"):("discipline "+hearts(pet.discipline)+"  weight "+pet.weight+"  mistakes "+pet.mistakes); document.getElementById("log").textContent=pet.log; document.querySelectorAll("[data-hat]").forEach(b=>b.classList.toggle("on",+b.dataset.hat===pet.hat)); document.querySelectorAll("[data-clothes]").forEach(b=>b.classList.toggle("on",+b.dataset.clothes===pet.clothes)); document.querySelectorAll("[data-ear]").forEach(b=>b.classList.toggle("on",+b.dataset.ear===pet.ear)); }
-document.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{ if(b.dataset.act==="reset")pet=fresh(); else act(b.dataset.act); render() });
-document.getElementById("hat").onclick=e=>{const t=e.target.closest("[data-hat]"); if(!t)return; pet.hat=+t.dataset.hat; pet.log="Hat: "+hats[pet.hat]; render()};
-document.getElementById("clothes").onclick=e=>{const t=e.target.closest("[data-clothes]"); if(!t)return; pet.clothes=+t.dataset.clothes; pet.log="Clothes: "+clothes[pet.clothes]; render()};
-document.getElementById("ear").onclick=e=>{const t=e.target.closest("[data-ear]"); if(!t)return; pet.ear=+t.dataset.ear; pet.log="Earring: "+ears[pet.ear]; render()};
-setInterval(()=>{tick();render()},1000); render();
-</script></body></html>
+function act(name) {
+  if (pet.dead) return pet.log = "Dead on day " + pet.frozenDay + ". The picture is frozen.";
+  if (name === "sitter") { pet.sitterUntil = pet.ageMin + 8 * 60; pet.calling = false; return pet.log = "Sitter until " + hhmm(pet.clock + 8 * 60) + ". Clock paused 8h."; }
+  if (pet.ageMin < pet.sitterUntil) return pet.log = "With the sitter.";
+  if (name === "meal") { if (pet.hunger >= 4) return pet.log = "Full."; pet.hunger++; pet.weight++; pet.log = "Meal. One hunger heart."; clear("hunger"); }
+  else if (name === "snack") { if (pet.happy >= 4) return pet.log = "Snack refused."; pet.happy++; pet.weight += 2; pet.log = "Snack. One happy heart."; clear("happy"); }
+  else if (name === "play") { if (pet.happy >= 4) return pet.log = "Will not play."; pet.happy++; pet.log = "Game. One happy heart."; clear("happy"); }
+  else if (name === "flush") { if (!pet.poop) return pet.log = "Clean."; pet.poop = 0; pet.happy = Math.min(4, pet.happy + 1); pet.log = "Flushed."; clear("poop"); }
+  else if (name === "med") { if (!pet.sick) return pet.log = "Not sick."; pet.sick = false; pet.log = "Medicine."; clear("sick"); }
+  else if (name === "lights") { pet.lightsOff = !pet.lightsOff; pet.log = pet.lightsOff ? "Lights off." : "Lights on."; if (pet.asleep && pet.lightsOff) clear("sleep"); }
+  else if (name === "scold") { if (pet.callReason === "spoil") { pet.discipline = Math.min(4, pet.discipline + 1); pet.log = "Scold counted."; clear("spoil"); } else pet.log = "Nothing to scold."; }
+}
+function clear(r) { if (pet.callReason === r) { pet.calling = false; pet.callReason = ""; } }
+function hhmm(mins) { mins = ((mins % (24 * 60)) + 24 * 60) % (24 * 60); return String(Math.floor(mins / 60)).padStart(2, "0") + ":" + String(mins % 60).padStart(2, "0"); }
+function tick() {
+  if (pet.dead) return;
+  pet.clock = (pet.clock + 1) % (24 * 60);
+  pet.ageMin++;
+  if (pet.ageMin < pet.sitterUntil) return;
+  const h = Math.floor(pet.clock / 60);
+  pet.asleep = h >= 22 || h < 8;
+  if (!pet.asleep && pet.ageMin % 240 === 0 && pet.hunger > 0) pet.hunger--;
+  if (!pet.asleep && pet.ageMin % 300 === 0 && pet.happy > 0) pet.happy--;
+  if (pet.ageMin % 220 === 0 && pet.poop < 4) pet.poop++;
+  if (pet.poop >= 3) pet.sick = true;
+  if (!pet.calling) {
+    if (pet.sick) call("sick");
+    else if (pet.poop) call("poop");
+    else if (pet.asleep && !pet.lightsOff) call("sleep");
+    else if (!pet.hunger) call("hunger");
+    else if (!pet.happy) call("happy");
+    else if (pet.ageMin % 360 === 0) call("spoil");
+  } else if (--pet.callLeft <= 0) {
+    if (pet.callReason === "spoil") pet.discMistakes++; else pet.mistakes++;
+    pet.log = "Missed call. Mistakes " + pet.mistakes + ".";
+    pet.calling = false;
+  }
+  if (pet.sick && pet.mistakes >= 5) { pet.dead = true; pet.frozenDay = day(); pet.log = "Died on day " + pet.frozenDay + "."; }
+}
+function call(r) { pet.calling = true; pet.callReason = r; pet.callLeft = 15; }
+function hearts(n, x, y) {
+  let s = "";
+  for (let i = 0; i < 4; i++) s += `<path d="M${x + i * 22} ${y} l8 7 8 -7 a5 5 0 0 0 -8 -5 a5 5 0 0 0 -8 5z" fill="${i < n ? "#e23d3d" : "#f4ffe8"}" stroke="#1b3a1a" stroke-width="2"/>`;
+  return s;
+}
+function svg() {
+  const f = form();
+  const scale = f === "egg" ? 0.55 : f === "baby" ? 0.7 : f === "good" ? 1.08 : f === "neglected" || f === "dead" ? 0.86 : 0.94;
+  const body = f === "neglected" ? "#7a8a55" : pet.fur;
+  const eye = f === "dead" ? '<path d="M132 168 l16 14 M148 168 l-16 14 M176 168 l16 14 M192 168 l-16 14" stroke="#1b3a1a" stroke-width="4"/>'
+    : pet.asleep || pet.eyes === "sleepy" ? '<path d="M126 172 q12 8 22 0 M176 172 q12 8 22 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>'
+    : pet.eyes === "wide" ? '<ellipse cx="136" cy="166" rx="12" ry="14"/><ellipse cx="186" cy="166" rx="12" ry="14"/><circle cx="136" cy="166" r="5" fill="#fff"/><circle cx="186" cy="166" r="5" fill="#fff"/>'
+    : '<circle cx="136" cy="168" r="8"/><circle cx="186" cy="168" r="8"/><circle cx="139" cy="165" r="2.5" fill="#fff"/><circle cx="189" cy="165" r="2.5" fill="#fff"/>';
+  const mouth = f === "dead" || pet.happy < 2 ? '<path d="M142 196 q18 -14 36 0" fill="none" stroke="#1b3a1a" stroke-width="5"/>' : '<path d="M140 190 q20 16 40 0" fill="none" stroke="#1b3a1a" stroke-width="5"/>';
+  const label = pet.dead ? "DIED DAY " + pet.frozenDay : "ALIVE " + day() + " DAYS";
+  return `<svg viewBox="0 0 320 320">
+    <rect width="320" height="320" fill="${pet.bg}"/>
+    <text x="16" y="28" font-family="monospace" font-size="12" fill="#102010">HUNGER</text>
+    ${hearts(pet.hunger, 16, 36)}
+    <text x="168" y="28" font-family="monospace" font-size="12" fill="#102010">HAPPY</text>
+    ${hearts(pet.happy, 168, 36)}
+    ${hat()}
+    <g transform="translate(160 190) scale(${scale}) translate(-160 -190)">
+      ${clothes()}
+      <ellipse cx="160" cy="198" rx="74" ry="52" fill="${body}" stroke="#1b3a1a" stroke-width="6"/>
+      <ellipse cx="112" cy="146" rx="24" ry="28" fill="${body}" stroke="#1b3a1a" stroke-width="6"/>
+      <ellipse cx="208" cy="146" rx="24" ry="28" fill="${body}" stroke="#1b3a1a" stroke-width="6"/>
+      <ellipse cx="160" cy="186" rx="48" ry="32" fill="#eaffd2"/>
+      ${eye}${mouth}${earring()}
+      ${f === "good" ? '<path d="M132 128 h56 l-8 12 h-40z" fill="#f2c14e" stroke="#1b3a1a"/>' : ""}
+    </g>
+    ${poop()}${pet.sick ? '<text x="286" y="78" font-size="28" fill="#d94f70">+</text>' : ""}
+    ${pet.calling ? `<text x="250" y="78" font-family="monospace" font-size="12" fill="#102010">${pet.callReason} ${pet.callLeft}</text>` : ""}
+    <rect x="50" y="262" width="220" height="40" rx="10" fill="${pet.dead ? "#1a1f22" : "#f4ffe8"}" stroke="#1b3a1a" stroke-width="4"/>
+    <text x="160" y="288" text-anchor="middle" font-family="monospace" font-size="18" fill="${pet.dead ? "#f4ffe8" : "#102010"}">${label}</text>
+  </svg>`;
+}
+function hat() {
+  if (pet.hat === 1) return '<path d="M108 108 h104 v18 H108z" fill="#355c9a" stroke="#1b3a1a" stroke-width="3"/>';
+  if (pet.hat === 2) return '<path d="M104 100 h112 l-14 18 H118z" fill="#e23d3d" stroke="#1b3a1a" stroke-width="3"/>';
+  if (pet.hat === 3) return '<path d="M148 78 l8 16 16 2 -12 10 4 16 -16 -8 -16 8 4 -16 -12 -10 16 -2z" fill="#f2c14e" stroke="#1b3a1a"/>';
+  return "";
+}
+function clothes() {
+  if (pet.clothes === 1) return '<path d="M102 206 h116 v30 H102z" fill="#f7f4ee" stroke="#1b3a1a"/>';
+  if (pet.clothes === 2) return '<path d="M96 206 q64 34 128 0 v32 q-64 16 -128 0z" fill="#355c9a" stroke="#1b3a1a"/>';
+  if (pet.clothes === 3) return '<path d="M108 208 h104 v24 H108z" fill="#f7f4ee" stroke="#1b3a1a"/><path d="M108 208 l52 16 52 -16" fill="none" stroke="#355c9a" stroke-width="5"/>';
+  return "";
+}
+function earring() {
+  if (pet.ear === 1) return '<circle cx="228" cy="158" r="5" fill="#f2c14e" stroke="#1b3a1a"/>';
+  if (pet.ear === 2) return '<ellipse cx="230" cy="164" rx="6" ry="9" fill="none" stroke="#f2c14e" stroke-width="3"/>';
+  return "";
+}
+function poop() { let s = ""; for (let i = 0; i < pet.poop; i++) s += `<circle cx="${28 + i * 16}" cy="248" r="7" fill="#6b4f2a" stroke="#1b3a1a"/>`; return s; }
+function render() {
+  document.getElementById("screen").innerHTML = svg();
+  document.getElementById("log").textContent = pet.log + " · " + form() + " · " + hhmm(pet.clock);
+  document.querySelectorAll("[data-hat]").forEach(b => b.classList.toggle("on", +b.dataset.hat === pet.hat));
+  document.querySelectorAll("[data-clothes]").forEach(b => b.classList.toggle("on", +b.dataset.clothes === pet.clothes));
+  document.querySelectorAll("[data-ear]").forEach(b => b.classList.toggle("on", +b.dataset.ear === pet.ear));
+}
+document.querySelectorAll("[data-act]").forEach(b => b.onclick = () => { if (b.dataset.act === "reset") pet = hatch(); else act(b.dataset.act); render(); });
+document.getElementById("hat").onclick = e => { const t = e.target.closest("[data-hat]"); if (!t) return; pet.hat = +t.dataset.hat; render(); };
+document.getElementById("clothes").onclick = e => { const t = e.target.closest("[data-clothes]"); if (!t) return; pet.clothes = +t.dataset.clothes; render(); };
+document.getElementById("ear").onclick = e => { const t = e.target.closest("[data-ear]"); if (!t) return; pet.ear = +t.dataset.ear; render(); };
+setInterval(() => { tick(); render(); }, 1000);
+render();
+</script>
+</body>
+</html>
