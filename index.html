@@ -6,98 +6,66 @@
 <title>Pepegotchi</title>
 <style>
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #142016; color: #172016; font-family: ui-monospace, Menlo, Consolas, monospace; }
-  .shell { width: min(94vw, 380px); background: #d7d2c8; border-radius: 42px 42px 64px 64px; padding: 18px 16px 22px; box-shadow: inset 0 0 0 3px #1b1b1b; }
-  .brand { text-align: center; font-weight: 800; letter-spacing: 2px; font-size: 13px; margin-bottom: 8px; }
-  .screen { background: #9ad07a; border: 6px solid #2c2c2c; border-radius: 16px; padding: 8px; }
+  .shell { width: min(94vw, 390px); background: #d7d2c8; border-radius: 42px 42px 64px 64px; padding: 16px; box-shadow: inset 0 0 0 3px #1b1b1b; }
+  .brand { text-align: center; font-weight: 800; letter-spacing: 2px; font-size: 13px; }
+  .screen { background: #9ad07a; border: 6px solid #2c2c2c; border-radius: 16px; padding: 8px; margin-top: 8px; }
   .screen.asleep { background: #1c2430; } .screen.dead { background: #2c3338; }
-  svg { width: 100%; height: 300px; display: block; }
-  .readout { font-size: 11px; margin-top: 8px; }
-  .btns, .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  button { border: 2px solid #1b1b1b; background: #f4f1ea; border-radius: 999px; padding: 8px 10px; font: inherit; font-size: 12px; }
+  svg { width: 100%; height: 250px; display: block; }
+  .meter { font-size: 13px; margin-top: 6px; } .call { font-size: 12px; min-height: 16px; }
+  .btns, .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  button { border: 2px solid #1b1b1b; background: #f4f1ea; border-radius: 999px; padding: 7px 9px; font: inherit; font-size: 12px; }
   button.on { background: #1b3a1a; color: #f4ffe8; }
-  h2 { font-size: 12px; margin: 14px 0 0; }
-  .log { font-size: 12px; line-height: 1.4; min-height: 36px; margin-top: 8px; }
-</style>
-</head>
-<body>
-<div class="shell">
-  <div class="brand">PEPEGOTCHI</div>
-  <div class="screen" id="screen"></div>
-  <div class="readout" id="readout"></div>
-  <div class="btns">
-    <button data-act="meal">Meal</button><button data-act="snack">Snack</button>
-    <button data-act="play">Play</button><button data-act="bath">Bath</button>
-    <button data-act="lights">Lights</button><button data-act="reset">Reset</button>
-  </div>
-  <h2>Clothes</h2>
-  <div class="row" id="clothes">
-    <button data-outfit="0">none</button><button data-outfit="1">cap</button>
-    <button data-outfit="2">hoodie</button><button data-outfit="3">scarf</button><button data-outfit="4">bow</button>
-  </div>
-  <h2>Toys</h2>
-  <div class="row" id="toys">
-    <button data-toy="0">none</button><button data-toy="1">ball</button>
-    <button data-toy="2">duck</button><button data-toy="3">skateboard</button>
-  </div>
-  <div class="log" id="log">Bars move slowly. Cap sits on the head. Toys sit on the floor.</div>
-</div>
+  h2 { font-size: 11px; margin: 10px 0 0; } .log { font-size: 12px; min-height: 32px; margin-top: 6px; }
+</style></head><body>
+<div class="shell"><div class="brand">PEPEGOTCHI</div><div class="screen" id="screen"></div>
+<div class="meter" id="meter"></div><div class="call" id="call"></div>
+<div class="btns">
+<button data-act="meal">Meal</button><button data-act="snack">Snack</button><button data-act="play">Play</button>
+<button data-act="flush">Flush</button><button data-act="med">Medicine</button><button data-act="lights">Lights</button>
+<button data-act="scold">Scold</button><button data-act="reset">Reset</button></div>
+<h2>Hat</h2><div class="row" id="hat"><button data-hat="0">none</button><button data-hat="1">beanie</button><button data-hat="2">cap</button><button data-hat="3">party</button></div>
+<h2>Clothes</h2><div class="row" id="clothes"><button data-clothes="0">none</button><button data-clothes="1">tee</button><button data-clothes="2">hoodie</button><button data-clothes="3">sailor</button></div>
+<h2>Earring</h2><div class="row" id="ear"><button data-ear="0">none</button><button data-ear="1">stud</button><button data-ear="2">hoop</button></div>
+<div class="log" id="log">Four hearts. A call unanswered for 15 game minutes is a care mistake.</div></div>
 <script>
-const outfits = ["none","cap","hoodie","scarf","bow"];
-const toys = ["none","ball","duck","skateboard"];
-let pet = fresh();
-function fresh(){return {happy:70,tired:15,bored:20,dirty:8,poop:0,days:0,outfit:0,toy:0,asleep:false,dead:false,log:"Hatched. Bars creep. Buttons move them."}}
-function clamp(n){return Math.max(0,Math.min(100,Math.round(n)))}
+const hats=["none","beanie","cap","party"], clothes=["none","tee","hoodie","sailor"], ears=["none","stud","hoop"];
+let pet=fresh();
+function fresh(){return {hunger:4,happy:4,discipline:1,weight:20,poop:0,sick:false,mistakes:0,discMistakes:0,ageMin:0,clock:10*60,asleep:false,lightsOff:false,calling:false,callLeft:0,callReason:"",hat:0,clothes:0,ear:0,dead:false,log:"Hatched. Meal fills hunger. Snack or play fills happy."}}
+function hearts(n){return "\u2665".repeat(n)+"\u2661".repeat(4-n)}
+function hhmm(){const h=Math.floor(pet.clock/60)%24,m=pet.clock%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")}
+function stage(){if(pet.ageMin<60)return "baby"; if(pet.ageMin<60+48*60)return "child"; if(pet.ageMin<60+48*60+72*60)return "teen"; return "adult"}
 function act(name){
-  if(pet.dead&&name!=="reset"){pet.log="Dead. Reset to hatch another.";return}
-  if(pet.asleep&&name!=="lights"&&name!=="reset"){pet.log="Asleep. Lights to wake it.";return}
-  if(name==="meal"){pet.happy=clamp(pet.happy+10);pet.log="Meal. Happy +10."}
-  else if(name==="snack"){pet.happy=clamp(pet.happy+16);pet.dirty=clamp(pet.dirty+8);pet.log="Snack. Happy up, Dirty +8."}
-  else if(name==="play"){if(!pet.toy){pet.log="Give it a toy, then Play.";return}pet.bored=clamp(pet.bored-28);pet.happy=clamp(pet.happy+14);pet.tired=clamp(pet.tired+10);pet.log="Played with the "+toys[pet.toy]+". Bored down."}
-  else if(name==="bath"){pet.dirty=0;pet.poop=0;pet.log="Bath. Dirty and poop cleared."}
-  else if(name==="lights"){pet.asleep=!pet.asleep;if(pet.asleep)pet.tired=clamp(pet.tired-25);pet.log=pet.asleep?"Lights off. Tired drops.":"Lights on."}
+ if(pet.dead){pet.log="Dead. Reset.";return}
+ if(name==="meal"){if(pet.asleep)return pet.log="Asleep."; if(pet.hunger>=4)return pet.log="Full. It refuses."; pet.hunger++; pet.weight++; pet.log="Meal. Hunger +1 heart."; clearCall("hunger")}
+ else if(name==="snack"){if(pet.asleep)return pet.log="Asleep."; if(pet.happy>=4)return pet.log="Already happy. Snack refused."; pet.happy++; pet.weight+=2; pet.log="Snack. Happy +1, weight +2."; clearCall("happy")}
+ else if(name==="play"){if(pet.asleep)return pet.log="Asleep."; if(pet.happy>=4)return pet.log="Does not want to play."; pet.happy++; pet.log="Game won. Happy +1."; clearCall("happy")}
+ else if(name==="flush"){if(!pet.poop)return pet.log="No poop."; pet.poop=0; pet.happy=Math.min(4,pet.happy+1); pet.log="Flushed. Happy +1."; clearCall("poop")}
+ else if(name==="med"){if(!pet.sick){pet.discMistakes++; return pet.log="Not sick. Discipline mistake."} pet.sick=false; pet.log="Medicine. Skull gone."; clearCall("sick")}
+ else if(name==="lights"){pet.lightsOff=!pet.lightsOff; pet.log=pet.lightsOff?"Lights off.":"Lights on."; if(pet.asleep&&pet.lightsOff)clearCall("sleep")}
+ else if(name==="scold"){if(pet.calling&&pet.callReason==="spoil"){pet.discipline=Math.min(4,pet.discipline+1); pet.log="Good scold. Discipline +1."; clearCall("spoil")} else {pet.discMistakes++; pet.log="Scolded for no reason."}}
 }
+function clearCall(r){if(pet.callReason===r){pet.calling=false; pet.callReason=""}}
+function startCall(r){pet.calling=true; pet.callReason=r; pet.callLeft=15}
 function tick(){
-  if(pet.dead)return;
-  pet.days+=0.02; pet.bored=clamp(pet.bored+1); pet.dirty=clamp(pet.dirty+1);
-  pet.tired=clamp(pet.tired+(pet.asleep?-2:1));
-  if(pet.bored>60)pet.happy=clamp(pet.happy-1);
-  if(pet.dirty>75&&pet.poop<3&&Math.random()<0.25)pet.poop+=1;
-  if(pet.happy<5&&pet.bored>95&&pet.dirty>95)pet.dead=true;
+ if(pet.dead)return; pet.clock=(pet.clock+1)%(24*60); pet.ageMin++;
+ const h=Math.floor(pet.clock/60); pet.asleep=h>=22||h<9;
+ if(pet.ageMin%180===0&&!pet.asleep&&pet.hunger>0)pet.hunger--;
+ if(pet.ageMin%240===0&&!pet.asleep&&pet.happy>0)pet.happy--;
+ if(pet.ageMin%200===0&&pet.poop<4)pet.poop++;
+ if(pet.poop>=3)pet.sick=true;
+ if(!pet.calling){ if(pet.sick)startCall("sick"); else if(pet.poop)startCall("poop"); else if(pet.asleep&&!pet.lightsOff)startCall("sleep"); else if(pet.hunger===0)startCall("hunger"); else if(pet.happy===0)startCall("happy"); else if(pet.ageMin%300===0)startCall("spoil") }
+ else { pet.callLeft--; if(pet.callLeft<=0){ if(pet.callReason==="spoil")pet.discMistakes++; else pet.mistakes++; pet.log="Missed the call. Care mistakes "+pet.mistakes+"."; pet.calling=false } }
+ if(pet.sick&&pet.mistakes>=6)pet.dead=true;
 }
-function clothes(){
-  if(pet.outfit===1)return '<path d="M92 132 h136 l-10 16 H102z" fill="#e23d3d" stroke="#1b3a1a" stroke-width="3"/><rect x="96" y="146" width="128" height="8" fill="#e23d3d" stroke="#1b3a1a"/>';
-  if(pet.outfit===2)return '<path d="M96 214 q64 36 128 0 v34 q-64 18 -128 0z" fill="#355c9a" stroke="#1b3a1a" stroke-width="3"/><path d="M118 226 h84" stroke="#d7e4f5" stroke-width="3"/>';
-  if(pet.outfit===3)return '<path d="M118 208 q42 10 84 0 q-8 14 -42 16 q-34 -2 -42 -16z" fill="#d94f70" stroke="#1b3a1a" stroke-width="3"/><path d="M196 214 q16 18 8 28" fill="none" stroke="#d94f70" stroke-width="6"/>';
-  if(pet.outfit===4)return '<path d="M214 128 l14 10 -14 10 -14 -10z" fill="#f2c14e" stroke="#1b3a1a" stroke-width="3"/>';
-  return "";
-}
-function toy(){
-  if(pet.toy===1)return '<circle cx="262" cy="248" r="14" fill="#e23d3d" stroke="#1b3a1a" stroke-width="3"/>';
-  if(pet.toy===2)return '<ellipse cx="262" cy="250" rx="16" ry="10" fill="#f2c14e" stroke="#1b3a1a" stroke-width="3"/>';
-  if(pet.toy===3)return '<rect x="236" y="246" width="46" height="7" rx="2" fill="#355c9a" stroke="#1b3a1a"/><circle cx="246" cy="256" r="4"/><circle cx="272" cy="256" r="4"/>';
-  return "";
-}
-function poop(){let s=""; for(let i=0;i<pet.poop;i++) s+=`<circle cx="${36+i*16}" cy="${252+(i%2)*6}" r="7" fill="#6b4f2a" stroke="#1b3a1a"/>`; return s}
-function bar(y,name,pct,fill){return `<text x="8" y="${y}" font-family="monospace" font-size="11" fill="#102010">${name}</text><rect x="62" y="${y-9}" width="92" height="9" fill="#f4ffe8" stroke="#1b3a1a"/><rect x="62" y="${y-9}" width="${Math.round(pct*0.92)}" height="9" fill="${fill}"/><text x="160" y="${y}" font-family="monospace" font-size="11" fill="#102010">${pct}</text>`}
-function svg(){
-  const dead=pet.dead, fill=pet.dirty>70?"#7a9a45":"#5fbf4a";
-  const eye=dead?'<path d="M118 168 l16 14 M134 168 l-16 14 M186 168 l16 14 M202 168 l-16 14" stroke="#1b3a1a" stroke-width="4"/>':pet.asleep?'<path d="M114 174 q12 8 22 0 M184 174 q12 8 22 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>':pet.happy<40?'<ellipse cx="126" cy="176" rx="9" ry="5"/><ellipse cx="194" cy="176" rx="9" ry="5"/>':'<circle cx="126" cy="172" r="9"/><circle cx="194" cy="172" r="9"/><circle cx="129" cy="169" r="3" fill="#fff"/><circle cx="197" cy="169" r="3" fill="#fff"/>';
-  const mouth=dead||pet.happy<40?'<path d="M138 198 q22 -16 44 0" fill="none" stroke="#1b3a1a" stroke-width="5"/>':'<path d="M138 194 q22 18 44 0" fill="none" stroke="#1b3a1a" stroke-width="5"/>';
-  return `<svg viewBox="0 0 320 340">${bar(18,"HAPPY",pet.happy,"#3d9a4a")}${bar(36,"TIRED",pet.tired,"#355c9a")}${bar(54,"BORED",pet.bored,"#e07a5f")}${bar(72,"DIRTY",pet.dirty,"#6b4f2a")}${clothes()}<ellipse cx="160" cy="214" rx="70" ry="48" fill="${fill}" stroke="#1b3a1a" stroke-width="6"/><ellipse cx="118" cy="156" rx="22" ry="26" fill="${fill}" stroke="#1b3a1a" stroke-width="6"/><ellipse cx="202" cy="156" rx="22" ry="26" fill="${fill}" stroke="#1b3a1a" stroke-width="6"/><ellipse cx="160" cy="200" rx="46" ry="32" fill="#c6ef9a"/>${eye}${mouth}${toy()}${poop()}<rect x="78" y="292" width="164" height="30" rx="8" fill="${dead?"#1a1f22":"#f4ffe8"}" stroke="#1b3a1a" stroke-width="3"/><text x="160" y="312" text-anchor="middle" font-family="monospace" font-size="13" fill="${dead?"#f2f2f2":"#102010"}">${dead?"DIED DAY":"ALIVE"} ${Math.floor(pet.days)} DAYS</text></svg>`;
-}
-function render(){
-  document.getElementById("screen").className="screen"+(pet.dead?" dead":pet.asleep?" asleep":"");
-  document.getElementById("screen").innerHTML=svg();
-  document.getElementById("readout").textContent=(pet.dead?"dead":pet.asleep?"asleep":"awake")+" · poop "+pet.poop;
-  document.getElementById("log").textContent=pet.log;
-  document.querySelectorAll("[data-outfit]").forEach(b=>b.classList.toggle("on",+b.dataset.outfit===pet.outfit));
-  document.querySelectorAll("[data-toy]").forEach(b=>b.classList.toggle("on",+b.dataset.toy===pet.toy));
-}
-document.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{if(b.dataset.act==="reset")pet=fresh();else act(b.dataset.act);render()});
-document.getElementById("clothes").onclick=e=>{const t=e.target.closest("[data-outfit]");if(!t)return;pet.outfit=+t.dataset.outfit;pet.log="Wearing "+outfits[pet.outfit]+".";render()};
-document.getElementById("toys").onclick=e=>{const t=e.target.closest("[data-toy]");if(!t)return;pet.toy=+t.dataset.toy;pet.log=pet.toy?"Toy on the floor: "+toys[pet.toy]+".":"Toy put away.";render()};
-setInterval(()=>{tick();render()},4000);
-render();
-</script>
-</body>
-</html>
+function hat(){ if(pet.hat===1)return '<path d="M96 112 h128 v16 H96z" fill="#355c9a" stroke="#1b3a1a"/>'; if(pet.hat===2)return '<path d="M100 108 h120 l-12 16 H112z" fill="#e23d3d" stroke="#1b3a1a"/><rect x="108" y="122" width="104" height="7" fill="#e23d3d" stroke="#1b3a1a"/>'; if(pet.hat===3)return '<path d="M150 86 l10 22 22 2 -18 14 6 22 -20 -12 -20 12 6 -22 -18 -14 22 -2z" fill="#f2c14e" stroke="#1b3a1a"/>'; return "" }
+function bodyClothes(){ if(pet.clothes===1)return '<path d="M108 186 h104 v28 H108z" fill="#f4f1ea" stroke="#1b3a1a"/>'; if(pet.clothes===2)return '<path d="M100 186 q60 28 120 0 v30 q-60 16 -120 0z" fill="#355c9a" stroke="#1b3a1a"/>'; if(pet.clothes===3)return '<path d="M112 188 h96 v22 H112z" fill="#f4f1ea" stroke="#1b3a1a"/><path d="M112 188 l48 16 48 -16" fill="none" stroke="#355c9a" stroke-width="4"/>'; return "" }
+function earring(){ if(pet.ear===1)return '<circle cx="214" cy="146" r="4" fill="#f2c14e" stroke="#1b3a1a"/>'; if(pet.ear===2)return '<ellipse cx="216" cy="152" rx="5" ry="8" fill="none" stroke="#f2c14e" stroke-width="3"/>'; return "" }
+function poop(){ let s=""; for(let i=0;i<pet.poop;i++) s+=`<circle cx="${28+i*14}" cy="210" r="6" fill="#6b4f2a" stroke="#1b3a1a"/>`; return s }
+function svg(){ const fill=pet.sick?"#7a9a45":"#5fbf4a"; const eye=pet.dead?'<path d="M118 150 l14 12 M132 150 l-14 12 M188 150 l14 12 M202 150 l-14 12" stroke="#1b3a1a" stroke-width="4"/>':pet.asleep?'<path d="M116 156 q10 7 20 0 M184 156 q10 7 20 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>':pet.happy<2?'<ellipse cx="126" cy="156" rx="8" ry="4"/><ellipse cx="194" cy="156" rx="8" ry="4"/>':'<circle cx="126" cy="154" r="8"/><circle cx="194" cy="154" r="8"/><circle cx="129" cy="151" r="2.5" fill="#fff"/><circle cx="197" cy="151" r="2.5" fill="#fff"/>'; const mouth=pet.happy<2||pet.dead?'<path d="M140 178 q20 -12 40 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>':'<path d="M140 174 q20 14 40 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>'; return `<svg viewBox="0 0 320 250">${hat()}${bodyClothes()}<ellipse cx="160" cy="176" rx="62" ry="40" fill="${fill}" stroke="#1b3a1a" stroke-width="5"/><ellipse cx="122" cy="132" rx="20" ry="24" fill="${fill}" stroke="#1b3a1a" stroke-width="5"/><ellipse cx="198" cy="132" rx="20" ry="24" fill="${fill}" stroke="#1b3a1a" stroke-width="5"/><ellipse cx="160" cy="166" rx="40" ry="26" fill="#c6ef9a"/>${eye}${mouth}${earring()}${poop()}${pet.sick?'<text x="250" y="48" font-size="22" fill="#d94f70">+</text>':""}</svg>` }
+function render(){ document.getElementById("screen").className="screen"+(pet.dead?" dead":pet.asleep?" asleep":""); document.getElementById("screen").innerHTML=svg(); document.getElementById("meter").textContent=hhmm()+"  "+stage()+"  hunger "+hearts(pet.hunger)+"  happy "+hearts(pet.happy); document.getElementById("call").textContent=pet.calling?("CALL "+pet.callReason+" \u00b7 "+pet.callLeft+" min"):("discipline "+hearts(pet.discipline)+"  weight "+pet.weight+"  mistakes "+pet.mistakes); document.getElementById("log").textContent=pet.log; document.querySelectorAll("[data-hat]").forEach(b=>b.classList.toggle("on",+b.dataset.hat===pet.hat)); document.querySelectorAll("[data-clothes]").forEach(b=>b.classList.toggle("on",+b.dataset.clothes===pet.clothes)); document.querySelectorAll("[data-ear]").forEach(b=>b.classList.toggle("on",+b.dataset.ear===pet.ear)); }
+document.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{ if(b.dataset.act==="reset")pet=fresh(); else act(b.dataset.act); render() });
+document.getElementById("hat").onclick=e=>{const t=e.target.closest("[data-hat]"); if(!t)return; pet.hat=+t.dataset.hat; pet.log="Hat: "+hats[pet.hat]; render()};
+document.getElementById("clothes").onclick=e=>{const t=e.target.closest("[data-clothes]"); if(!t)return; pet.clothes=+t.dataset.clothes; pet.log="Clothes: "+clothes[pet.clothes]; render()};
+document.getElementById("ear").onclick=e=>{const t=e.target.closest("[data-ear]"); if(!t)return; pet.ear=+t.dataset.ear; pet.log="Earring: "+ears[pet.ear]; render()};
+setInterval(()=>{tick();render()},1000); render();
+</script></body></html>
