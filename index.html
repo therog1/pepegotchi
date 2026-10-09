@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pepegotchi</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #142016; color: #e7f5dc; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .shell { width: min(92vw, 360px); background: #d7d2c8; color: #1b1b1b; border-radius: 46px 46px 70px 70px; padding: 22px; box-shadow: inset 0 0 0 3px #1b1b1b; }
+  .brand { text-align: center; font-weight: 800; letter-spacing: 2px; font-size: 13px; margin-bottom: 8px; }
+  .screen { background: #9ad07a; border: 6px solid #2c2c2c; border-radius: 18px; padding: 8px; }
+  .screen.asleep { background: #1c2430; } .screen.dead { background: #2c3338; }
+  svg { width: 100%; height: 250px; display: block; }
+  .icons, .log { font-size: 12px; margin-top: 8px; }
+  .btns, .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  button { border: 2px solid #1b1b1b; background: #f4f1ea; border-radius: 999px; padding: 8px 10px; font: inherit; font-size: 12px; }
+  h2 { font-size: 14px; margin: 16px 0 8px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="brand">PEPEGOTCHI</div>
+  <div class="screen" id="screen"></div>
+  <div class="icons" id="icons"></div>
+  <div class="btns">
+    <button data-act="meal">Meal</button><button data-act="snack">Snack</button>
+    <button data-act="play">Play</button><button data-act="bath">Bath</button>
+    <button data-act="med">Medicine</button><button data-act="lights">Lights</button>
+    <button data-act="scold">Scold</button><button data-act="reset">Reset</button>
+  </div>
+  <h2>Clothes</h2>
+  <div class="row" id="clothes">
+    <button data-outfit="0">none</button><button data-outfit="1">cap</button>
+    <button data-outfit="2">hoodie</button><button data-outfit="3">scarf</button><button data-outfit="4">bow</button>
+  </div>
+  <h2>Toys</h2>
+  <div class="row" id="toys">
+    <button data-toy="0">none</button><button data-toy="1">ball</button>
+    <button data-toy="2">duck</button><button data-toy="3">skateboard</button>
+  </div>
+  <div class="log" id="log">It just hatched.</div>
+</div>
+<script>
+const outfits=['none','cap','hoodie','scarf','bow'], toys=['none','ball','duck','skateboard'];
+const MIN=60000, HOUR=60*MIN;
+let pet=fresh();
+function fresh(){const n=Date.now();return{born:n,lastMeal:n,lastSnack:n,lastPlay:n,lastBath:n,aliveUntil:n+30*HOUR,deadAt:0,care:0,mistakes:0,outfit:0,toy:0,form:0,sick:false,asleep:false,log:'Hatched.'}}
+function living(){return !pet.deadAt && Date.now()<pet.aliveUntil}
+function pct(e,w){return Math.max(0,Math.min(100,Math.round(e/w*100)))}
+function hunger(){return living()?pct(Date.now()-pet.lastMeal,24*HOUR):100}
+function boredom(){return living()?pct(Date.now()-pet.lastPlay,30*HOUR):100}
+function poop(){return Math.min(4,Math.floor((Date.now()-pet.lastBath)/(8*HOUR)))}
+function dirt(){return living()?Math.min(100,pct(Date.now()-pet.lastBath,18*HOUR)+poop()*20):100}
+function ageDays(){const end=pet.deadAt||(Date.now()>=pet.aliveUntil?pet.aliveUntil:Date.now());return Math.max(0,Math.floor((end-pet.born)/(24*HOUR)))}
+function mood(){if(!living())return 4;if(pet.sick)return 3;const w=Math.max(hunger(),boredom(),dirt());return w<25?0:w<50?1:w<75?2:3}
+function extend(h){const n=Date.now();pet.aliveUntil=Math.min(Math.max(n,pet.aliveUntil)+h*HOUR,n+72*HOUR);pet.care++}
+function say(m){pet.log=m}
+function act(name){sync();if(!living())return say('It is gone. Reset to hatch another.');if(pet.asleep&&name!=='lights')return say('Lights are off.');const n=Date.now();
+if(name==='meal'){if(n-pet.lastMeal<4*HOUR)return say('Still full.');pet.lastMeal=n;extend(16);say('Ate a meal.')}
+else if(name==='snack'){if(n-pet.lastSnack<2*HOUR)return say('No more snacks.');pet.lastSnack=n;extend(6);if(poop()>=2||dirt()>70)pet.sick=true;say(pet.sick?'Snack made it sick.':'Snack.')}
+else if(name==='play'){if(!pet.toy)return say('Give it a toy first.');if(n-pet.lastPlay<3*HOUR)return say('Tired.');pet.lastPlay=n;extend(16);say('Played with the '+toys[pet.toy]+'.')}
+else if(name==='bath'){if(n-pet.lastBath<6*HOUR)return say('Already clean.');pet.lastBath=n;if(pet.sick)pet.sick=false;extend(16);say('Bath. Poop gone.')}
+else if(name==='med'){if(!pet.sick&&poop()<3){pet.mistakes++;say('Medicine on a healthy pet.')}else{pet.sick=false;extend(16);say('Medicine worked.')}}
+else if(name==='lights'){pet.asleep=!pet.asleep;say(pet.asleep?'Lights off.':'Lights on.')}
+else if(name==='scold'){if(hunger()<40&&dirt()<40&&!pet.sick){pet.mistakes=Math.max(0,pet.mistakes-1);say('Scolded a false call.')}else{pet.mistakes++;say('It needed something.')}}
+if(ageDays()>=4&&pet.form===0)pet.form=pet.mistakes<4&&pet.care>8?1:2}
+function sync(){if(!pet.deadAt&&Date.now()>=pet.aliveUntil){pet.deadAt=pet.aliveUntil;say('Died on day '+ageDays()+'.')}if(living()&&(poop()>=3||hunger()===100))pet.sick=true}
+function svg(){const m=mood(),dead=m===4,fill=pet.form===2?'#7a9a45':'#5fbf4a';
+const eye=dead?'<path d="M112 142 l20 16 M132 142 l-20 16 M184 142 l20 16 M204 142 l-20 16" stroke="#1b3a1a" stroke-width="4"/>':pet.asleep?'<path d="M112 150 q12 10 24 0 M184 150 q12 10 24 0" fill="none" stroke="#1b3a1a" stroke-width="4"/>':m>=2?'<ellipse cx="124" cy="154" rx="10" ry="6"/><ellipse cx="196" cy="154" rx="10" ry="6"/>':'<circle cx="124" cy="150" r="10"/><circle cx="196" cy="150" r="10"/><circle cx="127" cy="147" r="3" fill="#fff"/><circle cx="199" cy="147" r="3" fill="#fff"/>';
+const mouth=dead?'<path d="M138 198 h44" stroke="#1b3a1a" stroke-width="5"/>':m===0?'<path d="M132 186 q28 28 56 0" fill="none" stroke="#1b3a1a" stroke-width="5"/>':'<path d="M132 204 q28 -22 56 0" fill="none" stroke="#1b3a1a" stroke-width="5"/>';
+const cloth=pet.outfit===1?'<path d="M96 118 h128 l-14 22 h-100z" fill="#e23d3d" stroke="#1b3a1a"/>':pet.outfit===2?'<path d="M78 168 q82 70 164 0 v46 q-82 36 -164 0z" fill="#355c9a" stroke="#1b3a1a"/>':pet.outfit===3?'<path d="M110 168 q50 18 100 0 q-10 22 -50 22 q-40 0 -50 -22z" fill="#d94f70" stroke="#1b3a1a"/>':pet.outfit===4?'<path d="M214 104 l18 14 -18 14 -18 -14z" fill="#f2c14e" stroke="#1b3a1a"/>':'';
+const toy=pet.toy===1?'<circle cx="250" cy="214" r="16" fill="#e23d3d" stroke="#1b3a1a"/>':pet.toy===2?'<ellipse cx="252" cy="214" rx="18" ry="12" fill="#f2c14e" stroke="#1b3a1a"/>':pet.toy===3?'<rect x="228" y="206" width="46" height="8" fill="#355c9a" stroke="#1b3a1a"/>':'';
+let poo=''; if(!dead&&poop()) poo='<circle cx="78" cy="230" r="10" fill="#6b4f2a"/>';
+return `<svg viewBox="0 0 320 320"><ellipse cx="160" cy="188" rx="92" ry="70" fill="${fill}" stroke="#1b3a1a" stroke-width="6"/><ellipse cx="108" cy="126" rx="28" ry="34" fill="${fill}" stroke="#1b3a1a" stroke-width="6"/><ellipse cx="212" cy="126" rx="28" ry="34" fill="${fill}" stroke="#1b3a1a" stroke-width="6"/><ellipse cx="160" cy="176" rx="62" ry="46" fill="#c6ef9a"/>${eye}${mouth}${cloth}${toy}${poo}<rect x="70" y="250" width="180" height="34" rx="8" fill="${dead?'#1a1f22':'#f4ffe8'}" stroke="#1b3a1a"/><text x="160" y="272" text-anchor="middle" font-family="monospace" font-size="14" fill="${dead?'#f2f2f2':'#102010'}">${dead?'DIED DAY':'ALIVE'} ${ageDays()} DAYS</text></svg>`}
+function render(){sync();const s=document.getElementById('screen');s.className='screen'+(!living()?' dead':pet.asleep?' asleep':'');s.innerHTML=svg();const left=living()?Math.max(0,Math.round((pet.aliveUntil-Date.now())/HOUR)):0;document.getElementById('icons').textContent=`poop ${poop()} · ${pet.sick?'SICK':'ok'} · ${pet.asleep?'asleep':'awake'} · ${left}h left`;document.getElementById('log').textContent=pet.log}
+document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{if(b.dataset.act==='reset')pet=fresh();else act(b.dataset.act);render()});
+document.getElementById('clothes').onclick=e=>{const t=e.target.closest('[data-outfit]');if(!t)return;pet.outfit=+t.dataset.outfit;say('Wearing '+outfits[pet.outfit]+'.');render()};
+document.getElementById('toys').onclick=e=>{const t=e.target.closest('[data-toy]');if(!t)return;pet.toy=+t.dataset.toy;say(pet.toy?'Holding a '+toys[pet.toy]+'.':'Toy put away.');render()};
+setInterval(()=>{if(!pet.deadAt){const j=30*MIN;pet.born-=j;pet.lastMeal-=j;pet.lastSnack-=j;pet.lastPlay-=j;pet.lastBath-=j;pet.aliveUntil-=j}render()},1000);
+render();
+</script>
+</body>
+</html>
